@@ -272,7 +272,7 @@
     autoDeliver: { enable: false, interval: 3, limit: 100, greeting: '', useAiGreeting: false, aiPrompt: '', sendResume: false, resumeName: '' },
     aiFilter: { enable: false, apiKey: '', apiUrl: 'https://api.openai.com/v1/chat/completions', model: 'gpt-3.5-turbo', prompt: '请评估以下职位与求职者的匹配度，从1-10打分，10分最匹配。只返回JSON格式：{"score": number, "reason": "string"}', minScore: 7 },
     statistics: { date: new Date().toISOString().split('T')[0], total: 0, success: 0, filtered: 0 },
-    ui: { theme: 'green', fontSize: 'medium', panelWidth: null, panelHeight: null, filtersExpanded: true },
+    ui: { theme: 'green', fontSize: 'medium', panelWidth: null, panelHeight: null, filtersExpanded: true, scanConfirm: true },
     contacted: {}
   };
 
@@ -392,13 +392,16 @@
       } else {
         log('log', `找到 ${cards.length} 个职位卡片，开始解析...`);
       }
-      this.jobs = [];
+      const existingIds = new Set(this.jobs.map(j => j.id));
+      const previousCount = this.jobs.length;
       for (let i = 0; i < cards.length; i++) {
         const job = await this.parseCard(cards[i], i);
-        if (job) this.jobs.push(job);
+        if (job && !existingIds.has(job.id)) {
+          this.jobs.push(job);
+        }
         onProgress?.(i + 1, cards.length, this.jobs.length);
       }
-      log('log', `扫描到 ${this.jobs.length} 个有效职位`);
+      log('log', `扫描到 ${this.jobs.length} 个有效职位（本次新增 ${this.jobs.length - previousCount}）`);
       return this.jobs;
     }
 
@@ -917,7 +920,7 @@
         return { success: false, reason: '未找到发送简历按钮' };
       }
 
-      await sleep(600);
+      await sleep(1200);
       // 处理附件简历弹窗（若配置了简历名称）
       const resumeName = this.config.autoDeliver?.resumeName;
       if (resumeName) {
@@ -934,26 +937,29 @@
     }
 
     async selectAttachmentResume(resumeName) {
-      // 常见弹窗容器选择器（猎聘使用 ant-im-modal 系列）
+      // 常见弹窗容器选择器（猎聘使用 ant-im-modal / ant-modal 系列）
       const dialogSelectors = [
         '.ant-im-modal-content',
         '.ant-im-modal-wrap',
+        '.ant-modal-content',
+        '.ant-modal-wrap',
+        '.ant-modal',
         '.modal-content',
         '.dialog-content',
-        '.ant-modal-content',
         '.el-dialog',
         '.resume-select-dialog',
         '.im-resume-dialog',
         '.send-resume-dialog',
+        '.resume-list',
+        '.attachment-list',
         '[class*="modal"]',
         '[class*="dialog"]'
       ];
 
       let dialog = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        await sleep(800);
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        await sleep(1000);
         for (const sel of dialogSelectors) {
-          // 使用 querySelectorAll 避免第一个匹配项不可见的问题
           const els = Array.from(document.querySelectorAll(sel));
           const visibleEl = els.find(el => isVisible(el));
           if (visibleEl) {
@@ -962,20 +968,20 @@
           }
         }
         if (dialog) {
-          log('log', `第 ${attempt} 次检测发现附件简历弹窗`);
+          log('log', `第 ${attempt} 次检测发现附件简历弹窗/容器`);
           break;
         }
         log('log', `第 ${attempt} 次未检测到附件简历弹窗，继续等待...`);
       }
 
-      // 兜底策略：通过「立即投递」按钮向上追溯弹窗容器
+      // 兜底策略 1：通过「立即投递」按钮向上追溯弹窗容器
       if (!dialog) {
         const sendBtn = Array.from(document.querySelectorAll('button, a, span, div, [class*="btn"]'))
           .find(el => /立即投递|确认发送|确定/i.test(el.textContent || '') && isVisible(el));
         if (sendBtn) {
           let ancestor = sendBtn.parentElement;
           while (ancestor && ancestor !== document.body) {
-            if (/ant-im-modal|modal-content|dialog-content/i.test(ancestor.className || '')) {
+            if (/ant-im-modal|modal-content|dialog-content|ant-modal|resume-list|attachment-list/i.test(ancestor.className || '')) {
               dialog = ancestor;
               log('log', '通过「立即投递」按钮兜底检测到附件简历弹窗');
               break;
@@ -985,8 +991,31 @@
         }
       }
 
+      // 兜底策略 2：猎聘可能不使用传统弹窗，而是直接在聊天面板内展示简历列表
       if (!dialog) {
-        log('warn', '连续 3 次未检测到附件简历弹窗，跳过选择');
+        const resumeItems = Array.from(document.querySelectorAll('label, p, span, li, div, tr'))
+          .filter(el => el.textContent?.includes(resumeName) && isVisible(el));
+        if (resumeItems.length > 0) {
+          // 向上追溯到一个合理的容器（包含简历项和投递按钮）
+          for (const item of resumeItems) {
+            let ancestor = item.parentElement;
+            while (ancestor && ancestor !== document.body) {
+              const hasSendBtn = Array.from(ancestor.querySelectorAll('button, a, span, div, [class*="btn"]'))
+                .some(el => /立即投递|确认发送|确定/i.test(el.textContent || '') && isVisible(el));
+              if (hasSendBtn) {
+                dialog = ancestor;
+                log('log', '通过简历名称直接定位到投递区域（非弹窗模式）');
+                break;
+              }
+              ancestor = ancestor.parentElement;
+            }
+            if (dialog) break;
+          }
+        }
+      }
+
+      if (!dialog) {
+        log('warn', '连续 5 次未检测到附件简历弹窗或相关区域，跳过选择');
         return false;
       }
 
@@ -1113,7 +1142,7 @@
       this.jobListEl = null;
       this.logs = [];
       this.jobFilterStatus = 'all';
-      this.resizeState = { resizing: false, startX: 0, startY: 0, startW: 0, startH: 0 };
+      this.resizeState = { resizing: false, dir: null, startX: 0, startY: 0, startW: 0, startH: 0, startLeft: 0, startTop: 0 };
       this.uiPrefs = { theme: 'green', fontSize: 'medium', panelWidth: null, panelHeight: null };
     }
 
@@ -1166,15 +1195,24 @@
             <div>扫描: <b id="lph-stat-scanned">0</b></div>
             <div>过滤: <b id="lph-stat-filtered">0</b></div>
           </div>
-          <div class="lph-btns">
+          <div class="lph-actions-grid">
+            <button id="lph-btn-wizard" class="lph-btn info" style="grid-column: 1 / -1;" title="不会配选择器？点我自动识别页面元素">开始配置向导</button>
             <button id="lph-btn-scan" class="lph-btn primary">扫描职位</button>
             <button id="lph-btn-start" class="lph-btn success" disabled>开始投递</button>
+            <div class="lph-confirm-row">
+              <label class="lph-confirm-label" title="开启后，扫描完成将暂停并等待手动点击「开始投递」">
+                <input type="checkbox" id="lph-opt-scan-confirm" checked> 人工确认
+              </label>
+            </div>
+            <div class="lph-confirm-row">
+              <label class="lph-confirm-label" title="开启后，沟通时会自动点击「发送简历」按钮">
+                <input type="checkbox" id="lph-opt-send-resume"> 自动发简历
+              </label>
+            </div>
+          </div>
+          <div class="lph-btns lph-runtime-btns" style="display:none;">
             <button id="lph-btn-pause" class="lph-btn warn" style="display:none">暂停</button>
             <button id="lph-btn-stop" class="lph-btn danger" style="display:none">停止</button>
-          </div>
-          <div class="lph-wizard-entry">
-            <button id="lph-btn-wizard" class="lph-btn info">开始配置向导</button>
-            <span class="lph-wizard-hint">不会配选择器？点我自动识别页面元素</span>
           </div>
           <div class="lph-progress" id="lph-progress" style="display:none">
             <div class="lph-progress-bar"><div class="lph-progress-fill" id="lph-progress-fill"></div></div>
@@ -1216,7 +1254,14 @@
           </div>
           <div class="lph-logs" id="lph-logs"></div>
         </div>
-        <div class="lph-resize-handle" title="拖动调整大小"></div>
+        <div class="lph-resize-handle lph-resize-n" data-dir="n" title="上下拖动调整高度"></div>
+        <div class="lph-resize-handle lph-resize-s" data-dir="s" title="上下拖动调整高度"></div>
+        <div class="lph-resize-handle lph-resize-e" data-dir="e" title="左右拖动调整宽度"></div>
+        <div class="lph-resize-handle lph-resize-w" data-dir="w" title="左右拖动调整宽度"></div>
+        <div class="lph-resize-handle lph-resize-ne" data-dir="ne" title="拖动调整大小"></div>
+        <div class="lph-resize-handle lph-resize-nw" data-dir="nw" title="拖动调整大小"></div>
+        <div class="lph-resize-handle lph-resize-se" data-dir="se" title="拖动调整大小"></div>
+        <div class="lph-resize-handle lph-resize-sw" data-dir="sw" title="拖动调整大小"></div>
       `;
 
       // 插入到页面右上角
@@ -1236,20 +1281,28 @@
         initTop = rect.top;
         container.style.transition = 'none';
       });
-      // 面板大小拖拽缩放
-      const resizeHandle = container.querySelector('.lph-resize-handle');
-      if (resizeHandle) {
-        resizeHandle.addEventListener('mousedown', (e) => {
+      // 面板大小拖拽缩放（八向）
+      container.querySelectorAll('.lph-resize-handle').forEach(handle => {
+        handle.addEventListener('mousedown', (e) => {
           e.preventDefault();
           e.stopPropagation();
+          const rect = container.getBoundingClientRect();
           this.resizeState.resizing = true;
+          this.resizeState.dir = handle.dataset.dir;
           this.resizeState.startX = e.clientX;
           this.resizeState.startY = e.clientY;
-          this.resizeState.startW = container.offsetWidth;
-          this.resizeState.startH = container.offsetHeight;
+          this.resizeState.startW = rect.width;
+          this.resizeState.startH = rect.height;
+          this.resizeState.startLeft = rect.left;
+          this.resizeState.startTop = rect.top;
           container.style.transition = 'none';
+          // 固定使用 left/top 定位，避免 right/bottom 干扰
+          container.style.left = `${rect.left}px`;
+          container.style.top = `${rect.top}px`;
+          container.style.right = 'auto';
+          container.style.bottom = 'auto';
         });
-      }
+      });
 
       window.addEventListener('mousemove', (e) => {
         if (isDragging) {
@@ -1259,12 +1312,31 @@
           container.style.bottom = 'auto';
         }
         if (this.resizeState.resizing) {
-          const newW = this.resizeState.startW + (e.clientX - this.resizeState.startX);
-          const newH = this.resizeState.startH + (e.clientY - this.resizeState.startY);
+          const dx = e.clientX - this.resizeState.startX;
+          const dy = e.clientY - this.resizeState.startY;
+          const dir = this.resizeState.dir;
           const minW = 240;
           const minH = 320;
-          container.style.width = `${Math.max(minW, newW)}px`;
-          container.style.height = `${Math.max(minH, newH)}px`;
+          let newW = this.resizeState.startW;
+          let newH = this.resizeState.startH;
+          let newLeft = this.resizeState.startLeft;
+          let newTop = this.resizeState.startTop;
+
+          if (dir.includes('e')) newW = Math.max(minW, this.resizeState.startW + dx);
+          if (dir.includes('w')) {
+            newW = Math.max(minW, this.resizeState.startW - dx);
+            newLeft = this.resizeState.startLeft + (this.resizeState.startW - newW);
+          }
+          if (dir.includes('s')) newH = Math.max(minH, this.resizeState.startH + dy);
+          if (dir.includes('n')) {
+            newH = Math.max(minH, this.resizeState.startH - dy);
+            newTop = this.resizeState.startTop + (this.resizeState.startH - newH);
+          }
+
+          container.style.width = `${newW}px`;
+          container.style.height = `${newH}px`;
+          container.style.left = `${newLeft}px`;
+          container.style.top = `${newTop}px`;
         }
       });
       window.addEventListener('mouseup', () => {
@@ -1274,6 +1346,7 @@
         }
         if (this.resizeState.resizing) {
           this.resizeState.resizing = false;
+          this.resizeState.dir = null;
           container.style.transition = '';
           this.saveUiPrefs();
         }
@@ -1318,6 +1391,12 @@
 
       const filterSel = panel.querySelector('#lph-jobs-filter');
       if (filterSel) filterSel.value = this.jobFilterStatus || 'all';
+
+      const scanConfirmCb = panel.querySelector('#lph-opt-scan-confirm');
+      if (scanConfirmCb) scanConfirmCb.checked = this.helper.config.ui.scanConfirm !== false;
+
+      const sendResumeCb = panel.querySelector('#lph-opt-send-resume');
+      if (sendResumeCb) sendResumeCb.checked = this.helper.config.autoDeliver.sendResume || false;
 
       // 恢复 UI 个性化设置
       const configUi = this.helper.config.ui || {};
@@ -1391,6 +1470,24 @@
         filterSel.addEventListener('change', () => {
           this.jobFilterStatus = filterSel.value;
           this.renderJobList();
+        });
+      }
+
+      // 人工确认开关
+      const scanConfirmCb = panel.querySelector('#lph-opt-scan-confirm');
+      if (scanConfirmCb) {
+        scanConfirmCb.addEventListener('change', () => {
+          const ui = { ...this.helper.config.ui, scanConfirm: scanConfirmCb.checked };
+          this.helper.config.save({ ui });
+        });
+      }
+
+      // 自动发简历开关
+      const sendResumeCb = panel.querySelector('#lph-opt-send-resume');
+      if (sendResumeCb) {
+        sendResumeCb.addEventListener('change', () => {
+          const autoDeliver = { ...this.helper.config.autoDeliver, sendResume: sendResumeCb.checked };
+          this.helper.config.save({ autoDeliver });
         });
       }
 
@@ -1476,6 +1573,7 @@
       const panel = this.panel;
       if (!panel) return;
       const prefs = {
+        ...this.helper.config.ui,
         theme: panel.querySelector('#lph-theme')?.value || 'green',
         fontSize: panel.querySelector('#lph-fontsize')?.value || 'medium',
         panelWidth: parseInt(panel.style.width, 10) || null,
@@ -1821,21 +1919,29 @@
       const start = panel.querySelector('#lph-btn-start');
       const pause = panel.querySelector('#lph-btn-pause');
       const stop = panel.querySelector('#lph-btn-stop');
+      const runtimeBtns = panel.querySelector('.lph-runtime-btns');
 
       if (state === 'idle') {
         start.style.display = '';
+        start.textContent = '开始投递';
         start.disabled = this.helper.scanner.jobs.length === 0;
         pause.style.display = 'none';
         stop.style.display = 'none';
+        if (runtimeBtns) runtimeBtns.style.display = 'none';
       } else if (state === 'running') {
-        start.style.display = 'none';
+        start.style.display = '';
+        start.textContent = '投递中...';
+        start.disabled = true;
         pause.style.display = '';
         stop.style.display = '';
+        if (runtimeBtns) runtimeBtns.style.display = '';
       } else if (state === 'paused') {
         start.style.display = '';
         start.textContent = '继续';
+        start.disabled = false;
         pause.style.display = 'none';
         stop.style.display = '';
+        if (runtimeBtns) runtimeBtns.style.display = '';
       }
     }
 
@@ -1936,6 +2042,7 @@
       this.filter = new FilterEngine(this.config);
       this.deliver = new DeliverEngine(this.config);
       this.ui = new UIManager(this);
+      this.autoRunning = false;
     }
 
     async init() {
@@ -1976,12 +2083,14 @@
         // 扫描后立即预筛选并在卡片上标记
         for (let i = 0; i < this.scanner.jobs.length; i++) {
           const job = this.scanner.jobs[i];
-          await this.filter.evaluate(job);
-          this.ui.updateJobCard(job);
-          this.ui.addManualToggle(job, (j) => {
-            this.ui.updateJobCard(j);
-            this.ui.renderJobList();
-          });
+          if (job.status === 'wait' && job.autoPassed === null) {
+            await this.filter.evaluate(job);
+            this.ui.updateJobCard(job);
+            this.ui.addManualToggle(job, (j) => {
+              this.ui.updateJobCard(j);
+              this.ui.renderJobList();
+            });
+          }
         }
         this.ui.setScanned(this.scanner.jobs.length);
         this.ui.addLog(`扫描完成，共 ${this.scanner.jobs.length} 个职位`);
@@ -1992,6 +2101,19 @@
       } finally {
         this.ui.setScanning(false);
         this.ui.hideScanProgress();
+      }
+
+      // 自动模式：无需人工确认即自动投递
+      if (!this.config.ui.scanConfirm) {
+        if (!this.config.autoDeliver.enable) {
+          this.config.autoDeliver.enable = true;
+          await this.config.save({ autoDeliver: this.config.autoDeliver });
+          this.ui.addLog('已自动开启自动投递');
+        }
+        this.autoRunning = true;
+        this.ui.addLog('自动模式：扫描完成，即将开始投递');
+        await this.runAutoLoop();
+      } else {
         this.ui.setButtons('idle');
       }
     }
@@ -2036,9 +2158,105 @@
     }
 
     stopDeliver() {
+      this.autoRunning = false;
       this.deliver.stop();
       this.ui.setButtons('idle');
       this.ui.addLog('已停止');
+    }
+
+    async loadMoreJobs() {
+      const s = this.config.selectors;
+      const selector = s.jobCard || '.job-card-pc';
+      let previousCount = $$(selector).length;
+      let attempts = 0;
+      while (attempts < 3) {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        await sleep(2500);
+        const currentCount = $$(selector).length;
+        if (currentCount > previousCount) {
+          return true;
+        }
+        previousCount = currentCount;
+        attempts++;
+      }
+      return false;
+    }
+
+    async runAutoLoop() {
+      while (this.autoRunning) {
+        // 检查今日上限
+        const today = new Date().toISOString().split('T')[0];
+        const stats = this.config.statistics;
+        const todaySuccess = stats.date === today ? stats.success : 0;
+        if (todaySuccess >= this.config.autoDeliver.limit) {
+          this.ui.addLog('今日投递已达上限，自动停止');
+          this.autoRunning = false;
+          break;
+        }
+
+        // 投递当前批次中的待投递职位
+        const hasWait = this.scanner.jobs.some(j => j.status === 'wait');
+        if (hasWait) {
+          this.ui.setButtons('running');
+          this.ui.addLog('开始自动投递/沟通');
+          await this.deliver.start(this.scanner.jobs, this.filter, (job, idx) => {
+            this.ui.updateJobCard(job);
+            if (job.status === 'success') {
+              this.ui.addLog(`[${idx + 1}] ✓ ${job.title} - ${job.company}`, 'success');
+            } else if (job.status === 'error' || job.status === 'filtered') {
+              this.ui.addLog(`[${idx + 1}] ✗ ${job.title} - ${job.filterReason || job.statusText}`, 'warn');
+            }
+            this.ui.updateStats(this.config.statistics);
+          });
+        }
+
+        if (!this.autoRunning) break;
+
+        // 加载下一页
+        this.ui.addLog('准备加载下一批职位...');
+        const hasMore = await this.loadMoreJobs();
+        if (!hasMore) {
+          this.ui.addLog('没有更多职位了，自动循环结束');
+          this.autoRunning = false;
+          break;
+        }
+
+        // 扫描新职位
+        this.ui.setScanning(true);
+        try {
+          await this.scanner.scan((current, total, valid) => {
+            this.ui.showScanProgress(current, total, valid);
+          });
+          let newCount = 0;
+          for (let i = 0; i < this.scanner.jobs.length; i++) {
+            const job = this.scanner.jobs[i];
+            if (job.status === 'wait' && job.autoPassed === null) {
+              await this.filter.evaluate(job);
+              this.ui.updateJobCard(job);
+              this.ui.addManualToggle(job, (j) => {
+                this.ui.updateJobCard(j);
+                this.ui.renderJobList();
+              });
+              newCount++;
+            }
+          }
+          this.ui.setScanned(this.scanner.jobs.length);
+          this.ui.addLog(`本轮新增 ${newCount} 个职位`);
+          this.ui.renderJobList();
+          if (newCount === 0) {
+            this.ui.addLog('无新增职位，继续加载...');
+          }
+        } catch (e) {
+          log('error', '扫描过程发生异常', e);
+          this.ui.addLog('扫描失败，自动循环结束', 'error');
+          this.autoRunning = false;
+        } finally {
+          this.ui.setScanning(false);
+          this.ui.hideScanProgress();
+        }
+      }
+      this.ui.setButtons('idle');
+      this.ui.addLog('自动循环结束');
     }
   }
 

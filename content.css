@@ -231,11 +231,51 @@
   font-size: calc(var(--lph-font-size) * 1.15);
 }
 
+.lph-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.lph-actions-grid .lph-btn,
+.lph-actions-grid .lph-confirm-row {
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  justify-content: center;
+}
+
+.lph-runtime-btns {
+  margin-top: 8px;
+}
+
 .lph-btns {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
   flex-wrap: wrap;
+}
+
+.lph-confirm-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: calc(var(--lph-font-size) * 0.85);
+  color: var(--lph-text-secondary);
+}
+
+.lph-confirm-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lph-confirm-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
 }
 
 .lph-progress {
@@ -676,23 +716,83 @@
   color: #fff;
 }
 
-/* 右下角缩放手柄 */
+/* 八向缩放手柄 */
 .lph-resize-handle {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 16px;
-  height: 16px;
-  cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, var(--lph-primary) 50%);
-  border-bottom-right-radius: 12px;
-  opacity: 0.6;
   z-index: 10;
   pointer-events: auto;
 }
-
-.lph-resize-handle:hover {
-  opacity: 1;
+.lph-resize-n {
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: ns-resize;
+}
+.lph-resize-s {
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: ns-resize;
+}
+.lph-resize-e {
+  right: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.lph-resize-w {
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.lph-resize-ne,
+.lph-resize-nw,
+.lph-resize-se,
+.lph-resize-sw {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+.lph-resize-ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+.lph-resize-nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+.lph-resize-se {
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
+}
+.lph-resize-sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+.lph-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: var(--lph-primary);
+  opacity: 0;
+  transition: opacity 0.15s;
+  border-radius: inherit;
+}
+.lph-resize-handle:hover::after {
+  opacity: 0.5;
 }
 
 /* 配置向导入口 */
