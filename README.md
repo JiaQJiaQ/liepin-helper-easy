@@ -20,25 +20,13 @@
    （Edge 用户请输入 `edge://extensions/`）
 2. 开启右上角「**开发者模式**」开关
 3. 点击「**加载已解压的扩展程序**」
-4. 在弹出的文件选择框中，选中本项目的发布文件夹：
-   - 开发测试：`src/liepin-helper-easy/`
-   - 正式使用：`Output/liepin-helper-easy/`
+4. 在弹出的文件选择框中，选中本项目的发布文件夹：`liepin-helper-easy/`
 5. 加载成功后，浏览器右上角扩展栏会出现「猎聘助手小白版」图标
 6. 进入猎聘网职位搜索页面（如 `https://www.liepin.com/zhaopin/`）
 7. 页面右上角会出现「猎聘助手小白版」浮动面板，即可开始使用
 
 ### 方式二：重新加载（修改代码后）
-
-如果你在 `src/liepin-helper-easy/` 中修改了源码，请先运行项目根目录的构建脚本：
-
-```powershell
-# 在项目根目录执行
-$src = "F:\07-AIWorkSpace\kimiTest\src\liepin-helper-easy"
-$output = "F:\07-AIWorkSpace\kimiTest\Output\liepin-helper-easy"
-robocopy $src $output /E /COPY:DAT /R:0 /W:0 | Out-Null
-```
-
-构建完成后，回到 `chrome://extensions/` 页面，点击「猎聘助手小白版」卡片上的刷新按钮（↻），或先移除再重新加载 `Output/liepin-helper-easy/` 文件夹。
+到 `chrome://extensions/` 页面，点击「猎聘助手小白版」卡片上的刷新按钮（↻），或先移除再重新加载 `Output/liepin-helper-easy/` 文件夹。
 
 ## 使用方式
 
@@ -47,7 +35,4 @@ robocopy $src $output /E /COPY:DAT /R:0 /W:0 | Out-Null
 3. 跟随高亮提示，依次确认页面上的各个元素位置
 4. 配置完成后点击「保存配置」即可开始使用
 
-## 目录说明
 
-- `src/liepin-helper-easy/` — 源码目录
-- `Output/liepin-helper-easy/` — 构建输出目录
