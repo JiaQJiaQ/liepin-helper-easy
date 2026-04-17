@@ -1,0 +1,15 @@
+
+职位卡片
+div._40106Nrnc3.job-card-pc-container
+职位名称
+div._40106XZ0ui div.ellipsis-1
+公司名称
+span._40106K6Y1c
+薪资
+span._40106E8PWS
+地点
+div._40106__9nJ span.ellipsis-1
+沟通按钮
+btn.ant-btn
+招聘者头像（用于触发动态按钮）
+div.recruiter-info-box  > div._40106mtcQm

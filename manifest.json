@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "猎聘助手小白版 - Liepin Helper Easy",
+  "version": "2.0.0",
+  "description": "猎聘网求职助手：批量筛选、自动沟通、AI智能评估，提高投递效率",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "*://www.liepin.com/*",
+    "*://api.liepin.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.liepin.com/*",
+        "*://www.liepin.cn/*",
+        "*://c.liepin.com/*",
+        "*://liepin.com/*",
+        "*://liepin.cn/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "author": "jiaQ"
+}

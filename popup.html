@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>猎聘助手小白版</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-wrap">
+    <div class="popup-header">
+      <img src="icons/icon48.png" alt="icon" width="24" height="24">
+      <span>猎聘助手小白版</span>
+      <span class="author-tag">jiaQ</span>
+    </div>
+    <div class="popup-body">
+      <div class="stat-row">
+        <span>今日成功</span>
+        <b id="popup-success">0</b>
+      </div>
+      <div class="stat-row">
+        <span>今日过滤</span>
+        <b id="popup-filtered">0</b>
+      </div>
+      <div class="stat-row">
+        <span>投递上限</span>
+        <span id="popup-limit">100</span>
+      </div>
+      <div class="divider"></div>
+      <div class="switch-row">
+        <span>自动沟通</span>
+        <label class="switch">
+          <input type="checkbox" id="popup-autodeliver">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="switch-row">
+        <span>AI 筛选</span>
+        <label class="switch">
+          <input type="checkbox" id="popup-aifilter">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <button id="popup-options" class="btn-link">打开完整配置 →</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

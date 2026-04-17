@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>猎聘助手小白版 - 配置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="author-badge">jiaQ</div>
+        <div class="easy-tag">可视化向导版</div>
+        <div class="header-stats">
+        <div class="header-stat-item">
+          <span class="header-stat-value" id="stat-success">0</span>
+          <span class="header-stat-label">今日成功</span>
+        </div>
+        <div class="header-stat-item">
+          <span class="header-stat-value" id="stat-filtered">0</span>
+          <span class="header-stat-label">今日过滤</span>
+        </div>
+        <div class="header-stat-item">
+          <span class="header-stat-value" id="stat-total">0</span>
+          <span class="header-stat-label">今日总计</span>
+        </div>
+      </div>
+      <h1>猎聘助手配置</h1>
+    </div>
+
+    <section>
+      <div class="section-header">
+        <h2>自动沟通</h2>
+        <span class="section-arrow"></span>
+      </div>
+      <div class="section-content">
+      <div class="form-row">
+        <label class="switch">
+          <input type="checkbox" id="ad-enable">
+          <span class="slider"></span>
+        </label>
+        <span>启用自动沟通</span>
+      </div>
+      <div class="form-row">
+        <label class="switch">
+          <input type="checkbox" id="ad-send-resume">
+          <span class="slider"></span>
+        </label>
+        <span>沟通后自动发送简历</span>
+      </div>
+      <div class="form-group" style="margin-left: 52px;">
+        <label>附件简历名称</label>
+        <input type="text" id="ad-resume-name" placeholder="例如：Java开发工程师_张三_5年.pdf">
+        <div class="hint">若弹窗要求选择附件简历，助手会自动匹配该名称并点击「立即投递」。请填写完整或部分名称。</div>
+      </div>
+      <div class="hint" style="margin-left: 52px; margin-top: -4px; margin-bottom: 8px;">开启后，发送招呼语会自动点击聊天窗口中的「发送简历」按钮（若存在）。</div>
+      <div class="form-group">
+        <label>投递间隔（秒）</label>
+        <input type="number" id="ad-interval" min="1" max="60" value="3">
+      </div>
+      <div class="form-group">
+        <label>每日上限</label>
+        <input type="number" id="ad-limit" min="1" max="500" value="100">
+      </div>
+      <div class="form-group">
+        <label>招呼语</label>
+        <textarea id="ad-greeting" rows="3" placeholder="您好，我对这个职位很感兴趣，希望能有机会进一步沟通。"></textarea>
+        <div class="hint">支持变量：{title} 职位名, {company} 公司名, {salary} 薪资</div>
+      </div>
+      </div>
+    </section>
+
+    <div class="two-col">
+      <section>
+        <div class="section-header">
+          <h2>筛选条件</h2>
+          <span class="section-arrow"></span>
+        </div>
+        <div class="section-content">
+        <div class="filter-block">
+          <div class="form-row">
+            <label class="switch">
+              <input type="checkbox" id="f-title-enable">
+              <span class="slider"></span>
+            </label>
+            <span>岗位名筛选</span>
+            <select id="f-title-mode">
+              <option value="exclude">排除</option>
+              <option value="include">包含</option>
+            </select>
+          </div>
+          <input type="text" id="f-title-kws" placeholder="关键词1,关键词2">
+        </div>
+
+        <div class="filter-block">
+          <div class="form-row">
+            <label class="switch">
+              <input type="checkbox" id="f-company-enable">
+              <span class="slider"></span>
+            </label>
+            <span>公司名筛选</span>
+            <select id="f-company-mode">
+              <option value="exclude">排除</option>
+              <option value="include">包含</option>
+            </select>
+          </div>
+          <input type="text" id="f-company-kws" placeholder="关键词1,关键词2">
+        </div>
+
+        <div class="filter-block">
+          <div class="form-row">
+            <label class="switch">
+              <input type="checkbox" id="f-salary-enable">
+              <span class="slider"></span>
+            </label>
+            <span>薪资筛选（年薪 万）</span>
+          </div>
+          <div class="range-row">
+            <input type="number" id="f-salary-min" placeholder="最低（万）" min="0">
+            <span>~</span>
+            <input type="number" id="f-salary-max" placeholder="最高（万）" min="0">
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <div class="form-row">
+            <label class="switch">
+              <input type="checkbox" id="f-location-enable">
+              <span class="slider"></span>
+            </label>
+            <span>地点筛选</span>
+          </div>
+          <input type="text" id="f-location-kws" placeholder="北京,上海,深圳">
+        </div>
+
+        <div class="filter-block">
+          <div class="form-row">
+            <label class="switch">
+              <input type="checkbox" id="f-size-enable">
+              <span class="slider"></span>
+            </label>
+            <span>公司规模（人）</span>
+          </div>
+          <div class="range-row">
+            <input type="number" id="f-size-min" placeholder="最低" min="0">
+            <span>~</span>
+            <input type="number" id="f-size-max" placeholder="最高" min="0">
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <div class="form-row">
+            <label class="switch">
+              <input type="checkbox" id="f-experience-enable">
+              <span class="slider"></span>
+            </label>
+            <span>工作年限</span>
+          </div>
+          <input type="text" id="f-experience-kws" placeholder="3-5年,5-10年,经验不限">
+        </div>
+
+        <div class="filter-block">
+          <div class="form-row">
+            <label class="switch">
+              <input type="checkbox" id="f-education-enable">
+              <span class="slider"></span>
+            </label>
+            <span>学历</span>
+          </div>
+          <input type="text" id="f-education-kws" placeholder="本科,硕士,学历不限">
+        </div>
+
+        <div class="filter-block inline">
+          <label class="switch">
+            <input type="checkbox" id="f-headhunter">
+            <span class="slider"></span>
+          </label>
+          <span>过滤猎头/外包</span>
+        </div>
+
+        <div class="filter-block inline">
+          <label class="switch">
+            <input type="checkbox" id="f-contacted">
+            <span class="slider"></span>
+          </label>
+          <span>过滤已沟通过</span>
+        </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>AI 筛选（可选）</h2>
+          <span class="section-arrow"></span>
+        </div>
+        <div class="section-content">
+        <div class="form-row">
+          <label class="switch">
+            <input type="checkbox" id="ai-enable">
+            <span class="slider"></span>
+          </label>
+          <span>启用 AI 筛选</span>
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="password" id="ai-key" placeholder="sk-...">
+        </div>
+        <div class="form-group">
+          <label>API 地址</label>
+          <input type="text" id="ai-url" placeholder="https://api.openai.com/v1/chat/completions">
+        </div>
+        <div class="form-group">
+          <label>模型</label>
+          <input type="text" id="ai-model" placeholder="gpt-3.5-turbo">
+        </div>
+        <div class="form-group">
+          <label>最低匹配分（1-10）</label>
+          <input type="number" id="ai-score" min="1" max="10" value="7">
+        </div>
+        <div class="form-group">
+          <label>System Prompt</label>
+          <textarea id="ai-prompt" rows="4"></textarea>
+        </div>
+        </div>
+      </section>
+    </div>
+
+    <section>
+      <div class="section-header">
+        <h2>页面选择器（高级）</h2>
+        <span class="section-arrow"></span>
+      </div>
+      <div class="section-content">
+      <p class="hint">如果猎聘网页面更新导致插件失效，可在此调整 CSS 选择器。</p>
+      <div class="form-group">
+        <label>职位卡片</label>
+        <input type="text" id="sel-card" value="div._40106Nrnc3.job-card-pc-container, .job-card-pc, [data-selector=&quot;job-item&quot;], .job-list-item, .job-card-box">
+      </div>
+      <div class="form-group">
+        <label>职位名称</label>
+        <input type="text" id="sel-title" value="div._40106XZ0ui div.ellipsis-1, .job-title-box .ellipsis-1, .job-title, [data-selector=&quot;job-title&quot;]">
+      </div>
+      <div class="form-group">
+        <label>公司名称</label>
+        <input type="text" id="sel-company" value="span._40106K6Y1c, .company-name .ellipsis-1, .company-name, [data-selector=&quot;company-name&quot;]">
+      </div>
+      <div class="form-group">
+        <label>薪资</label>
+        <input type="text" id="sel-salary" value="span._40106E8PWS, .job-salary, .salary, [data-selector=&quot;job-salary&quot;]">
+      </div>
+      <div class="form-group">
+        <label>地点</label>
+        <input type="text" id="sel-location" value="div._40106__9nJ span.ellipsis-1, .job-dq, .job-location, [data-selector=&quot;job-city&quot;]">
+      </div>
+      <div class="form-group">
+        <label>沟通按钮</label>
+        <input type="text" id="sel-btn" value="btn.ant-btn, .job-card-pc-communication-btn, .btn-communication, [data-selector=&quot;job-communication-btn&quot;]">
+      </div>
+      <div class="form-group">
+        <label>招聘者头像（用于触发动态按钮）</label>
+        <input type="text" id="sel-avatar" value="div.recruiter-info-box > div._40106mtcQm, .recruiter-avatar, .boss-avatar, .avatar, .recruiter-info, .recruiter-name, .boss-info, .im-btn, .chat-btn, [data-selector=&quot;recruiter-avatar&quot;], img">
+        <div class="hint">部分职位的「聊一聊」按钮需要 hover 到招聘者头像上才会显示。如果动态按钮无法识别，可调整此选择器。</div>
+      </div>
+      <button id="btn-reset-selectors" class="btn secondary" type="button" style="margin-top:6px">恢复默认选择器</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>统计操作</h2>
+        <span class="section-arrow"></span>
+      </div>
+      <div class="section-content">
+        <button id="btn-reset" class="btn secondary">重置统计数据</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>配置备份</h2>
+        <span class="section-arrow"></span>
+      </div>
+      <div class="section-content">
+      <p class="hint">插件升级时会自动备份上一份旧配置，必要时可点击「恢复」还原。</p>
+      <div class="backup-list" id="backup-list">
+        <div class="empty-backup">暂无备份</div>
+      </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button id="btn-save" class="btn primary">保存配置</button>
+      <span id="save-msg" class="save-hint"></span>
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>
